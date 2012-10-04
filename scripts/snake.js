@@ -261,8 +261,8 @@
 				// 			 	also need to account for random grid sizes
 				// 				get grid size, inject at a certain point
 				for (var i=this.size; i>0; i--){
-					// what cell gets what class name
 					
+					// what cell gets what class name
 					inject_x = '#cell_'+(offset_x);
 					inject_y = '#row_'+(this.grid_size-this.size);
 
