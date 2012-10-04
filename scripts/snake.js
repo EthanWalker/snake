@@ -101,13 +101,76 @@
 
 				// State members
 				this.is_launched = false; // Determines what action to do on init
-				this.fail_count; // Tracks fail conditions
+				this.ticker; // setInterval value.
+				this.fail_count = 0; // Tracks fail conditions
+				this.max_fail = 3; // Maximum number of fails allowed before game resets
+				this.pause_on_fail = true; // Eventual game setting  - set to true by default for phase one
+				this.fail_display = $('#fails'); // jQuery object for DOM display of total fails
 				this.fruit_count; // Tracks the number of fruits on the level
 				this.maximum_level = 25; // Beat the game top out
 				this.current_level = 1; // Current level
 			},
-			check_level: function() {
-				
+			/**
+			 * ------------
+			 * PROCESS FAIL
+			 * ------------
+			 * @desc: 
+			 */
+			process_fail: function() {
+				var self = this;
+
+				/*
+					increment fail
+					check total fails
+					clear timer or reset game based on number of fails
+					update DOM
+				*/
+				// First stop the timer to avoid any needless memory usages
+				if(this.pause_on_fail) {
+					clearInterval(this.ticker);
+				}
+
+				// Check new fail count against max fail
+				if (this.fail_count+1 == this.max_fail) {
+					this.reset_game();
+				} else {
+					this.fail_count++;
+					// Update DOM
+					this.fail_display.text('Fails: ' + this.fail_count);
+				}
+			},
+			/**
+			 * ----------
+			 * RESET GAME
+			 * ----------
+			 * @desc: 
+			 */
+			reset_game: function() {
+				/*
+					remove snake
+					inject at original position
+					reset level
+					update essential DOM components
+				*/
+			
+				// Remove snake
+				var snake = $('.snake');
+
+				for (var i=0; i<snake.length; i++) {
+					$(snake[i]).removeClass('snake').removeAttr('data-segment');
+				}
+
+				// Reset level
+				this.current_level = 1;
+
+				// Reinsert snake at original point
+				this.snake._snake.init(this.snake);
+
+				// Reset fail counter
+				this.fail_count = 0;
+
+				// Update DOM
+				this.fail_display.text('Fails: ' + this.fail_count);
 			}
 		},
 		/**
@@ -217,11 +280,11 @@
 
 				// State members
 				this.level = this.snake._game.current_level; // Current level
-				this._snake = $('.snake'); // jquery object for accessing the snake
+				this.$snake; // jquery object for accessing the snake
 				this.size; // Size of the snake
 				this.head; // current head cell
 				this.tail; // current tail cell
-				this.tick = 1000; // Milisecond value for updating position
+				this.tick = 100; // Milisecond value for updating position
 				this.grid_size = this.snake._grid.grid_size; // Grid size
 
 				// Coordinate Members
@@ -272,6 +335,10 @@
 					// Decrement the offset
 					offset_x--;
 				}
+
+				// Now that the snake is in the DOM gran the constructor
+				// access
+				this.$snake = $('.snake');
 			},
 			/**
 			 * -------
@@ -324,7 +391,7 @@
 				var self = this;
 
 				// Wrap the processor in a ticker
-				setInterval(function() {
+				this.snake._game.ticker = setInterval(function() {
 
 					var segments = [], head, tail;
 
@@ -343,14 +410,45 @@
 					var head_next_x = (self.plane == 'x')? '#cell_'+(self.head_x + self.active_delta) : '#cell_'+self.head_x;
 					var head_next_y = (self.plane == 'y')? '#row_'+(self.head_y + self.active_delta) : '#row_'+self.head_y;
 
-					// TODO: wrap the next two functions in a fail/success condition checker
+					// Fail/Fruit checker
+					if (self.check_square(head_next_x, head_next_y)) {
+						// Next head processing
+						$(head_next_y).find(head_next_x).addClass('snake').attr('data-segment', (Math.max.apply(Math, segments))+1);
 
-					// Next head processing
-					$(head_next_y).find(head_next_x).addClass('snake').attr('data-segment', (Math.max.apply(Math, segments))+1);
-
-					// Remove tail
-					tail.removeClass('snake').removeAttr('data-segment');
+						// Remove tail
+						tail.removeClass('snake').removeAttr('data-segment');
+					} else {
+						self.snake._game.process_fail();
+					}
 				}, self.tick);
+			},
+			stop_snake: function() {
+				var self = this;
+
+				// Simple pausing method
+				clearInterval(this.snake._game.ticker);
+			},
+			/**
+			 * ------------
+			 * CHECK SQUARE
+			 * ------------
+			 * @desc: 
+			 */
+			check_square: function(x, y) {
+				var self = this;
+
+				var cell = $(y).find('td[id='+$(x).attr('id')+']');
+				var row = $('tr[id='+$(y).attr('id')+']');
+
+				if (cell.length != 0 && row.length != 0) {
+					if (cell.is('.snake')) {
+						return false;
+					} else {
+						return true;
+					}
+				} else {
+					return false;
+				}
 			}
 		},
 		/**
@@ -370,6 +468,11 @@
 			// Game launcher
 			$(document).on('click', "#launch", function(e) {
 				self._snake.move_snake();
+			});
+
+			// Game Stopper
+			$(document).on('click', "#stop", function(e) {
+				self._snake.stop_snake();
 			});
 		}
 	}
