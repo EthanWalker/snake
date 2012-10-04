@@ -1,13 +1,10 @@
-/* Javascript document
+/* Snakes on a Grid
  *
  * @Author:	Ken Stowell
  * @Date:		
  *
  */
 
-/**********************************************************************************************************************************************************
- * GLOBAL VARS/FUNCTIONS																																																																	*
- *********************************************************************************************************************************************************/
 
 /**********************************************************************************************************************************************************
  *	Snake
@@ -19,7 +16,7 @@
  *
  *
  */
-(function () {
+(function ($) {
 	/**
 	 * -------------------------------
 	 * Snake CONSTRUCTOR
@@ -160,7 +157,7 @@
 				// TODO: check for random controls
 
 				// TODO: make the grid reduction a non-linear regression,
-				// 			 for PHASE ONE, just take 10% to a max of 90% of original grid size off
+				// 			 for PHASE ONE: just take 10% to a max of 90% of original grid size off
 				// 			 the top
 
 				// return a result that linearly shrinks the grid based on the current level
@@ -179,7 +176,7 @@
 				var row;
 
 				// This is a singleton operation so i don't think checking for the existence
-				// of th wrapper elements is necessary, only check to see if the append worked.
+				// of the wrapper elements is necessary, only check to see if the append worked.
 				this.grid_wrapper.append(grid_root);
 				// Now that the table has been injected, 
 				// assign it to the constructor and start building teh rows and cells
@@ -197,7 +194,6 @@
 					// Append each row to the table
 					this.grid.append(tr);
 				}
-
 			}
 		},
 		/**
@@ -379,7 +375,7 @@
 	}
 	// Instantiate the local object and push it to the window object
 	window.Snake = new Snake();
-})();
+})(jQuery);
 
 
 /************************************************************* END ***************************************************************************************/ 
