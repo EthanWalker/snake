@@ -26,7 +26,7 @@
 		var self = this;
 		
 		// Launch object methods on doc ready
-		$(document).ready(function() {
+		$(window).load(function() {
 			self.init();
 		});
 	};
@@ -36,7 +36,7 @@
 	 * Snake OBJECT METHODS
 	 * --------------------
 	 */
-	Snake.prototype = {
+	Snake.fn = Snake.prototype = {
 		/**
 		 * ----
 		 * INIT
@@ -60,6 +60,9 @@
 
 			// Snaaaake
 			this._snake.init(this);
+
+			// Events
+			this._events.init(this);
 		},
 		/**
 		 * -----
@@ -97,10 +100,11 @@
 			init: function(root) {
 
 				// Members
-				this.snake = root; // Root snake object
+				this.snake = Snake.fn; // Root snake object
 
 				// State members
 				this.is_launched = false; // Determines what action to do on init
+				this.is_paused = true; // Determines what action the spacebar does
 				this.ticker; // setInterval value.
 				this.fail_count = 0; // Tracks fail conditions
 				this.max_fail = 3; // Maximum number of fails allowed before game resets
@@ -128,6 +132,8 @@
 				// First stop the timer to avoid any needless memory usages
 				if(this.pause_on_fail) {
 					clearInterval(this.ticker);
+					// Set the paused flag
+					this.is_paused = true;
 				}
 
 				// Check new fail count against max fail
@@ -137,6 +143,23 @@
 					this.fail_count++;
 					// Update DOM
 					this.fail_display.text('Fails: ' + this.fail_count);
+				}
+			},
+			/**
+			 * ------
+			 * ON/OFF
+			 * ------
+			 * @desc: pauses/resues game based on current status,
+			 */
+			on_off: function() {
+				var self = Snake.fn;
+
+				if(this.is_paused) {
+					self._snake.move_snake();
+					this.is_paused = false;
+				} else {
+					clearInterval(this.ticker);
+					this.is_paused = true;
 				}
 			},
 			/**
@@ -353,19 +376,23 @@
 				var keymap = {
 					37: { // Left
 						plane: 'x',
-						delta: -(this.delta)
+						delta: -(this.delta),
+						txt: 'left'
 					},
 					38: { // Top
 						plane: 'y',
-						delta: -(this.delta)
+						delta: -(this.delta),
+						txt: 'up'
 					},
 					39: { // Right
 						plane: 'x',
-						delta: (this.delta)
+						delta: (this.delta),
+						txt: 'right'
 					},
 					40: { // Bottom
 						plane: 'y',
-						delta: (this.delta)
+						delta: (this.delta),
+						txt: 'down'
 					}
  				};
 
@@ -377,6 +404,8 @@
  					this.plane = keymap[dir].plane;
  					// incrementor
  					this.active_delta = keymap[dir].delta;
+ 					// Update DOM
+ 					$('#dir').text('Direction: '+keymap[dir].txt);
  				} else {
  					// Do seomthing.
  				}
@@ -459,13 +488,45 @@
 		 */
 		_events: {
 			/**
-			 * -----------
-			 * 
-			 * -----------
+			 * ----
+			 * INIT
+			 * ----
 			 * @desc: 
 			 */
 			init: function() {
+				var self = this;
 
+				this.root = Snake.fn;
+		
+				// Game events
+				this._game();
+
+				// Grid events
+				this._grid();
+
+				// Snake events
+				this._snake();
+			},
+			_game: function() {
+				var self = this;
+				
+				// Game launcher
+				$(document).on('click', "#launch", function(e) {
+					self.root._snake.move_snake();
+				});
+
+				// Game Stopper
+				$(document).on('click', "#stop", function(e) {
+					self.root._snake.stop_snake();
+				});
+			},
+			_grid: function() {
+				var self = this;
+				console.log(this);
+			},
+			_snake: function() {
+				var self = this;
+				console.log(this);
 			}
 		},
 		/**
@@ -475,24 +536,20 @@
 		 * @desc: Object to house event bindings.
 		 */
 		bind_events: function() {
-			var self = this;
+			var self = Snake.fn;
 
 			// Directional binding
 			$(document).on('keydown', function(e){
 				self._snake.set_dir(e, e.keyCode);
 			});
 
-			// Game launcher
-			$(document).on('click', "#launch", function(e) {
-				self._snake.move_snake();
-			});
-
-			// Game Stopper
-			$(document).on('click', "#stop", function(e) {
-				self._snake.stop_snake();
+			$(document).on('keyup', function(e) {
+				if(e.keyCode === 32) {
+					self._game.on_off();
+				}
 			});
 		}
-	}
+	};
 	// Instantiate the local object and push it to the window object
 	window.Snake = new Snake();
 })(jQuery);
